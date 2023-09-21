@@ -12,47 +12,73 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  // int counter = 0;
+  bool showTitle = true;
 
-  List<int> numbers = [];
-
-  void onClicked() {
+  void toggleTitle() {
     setState(() {
-      // counter += 1;
-      numbers.add(numbers.length);
+      showTitle = !showTitle;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData(
+        textTheme: const TextTheme(
+          titleLarge: TextStyle(
+            color: Colors.red,
+          ),
+        ),
+      ),
       home: Scaffold(
         backgroundColor: const Color(0xfff4eddb),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                'Click Count',
-                style: TextStyle(
-                  fontSize: 30,
-                ),
-              ),
-              /* Text(
-                '$counter',
-                style: const TextStyle(
-                  fontSize: 30,
-                ),
-              ), */
-              for (var n in numbers) Text('$n'),
+              showTitle ? const MyLargeTitle() : const Text("nothing"),
               IconButton(
-                onPressed: onClicked,
-                icon: const Icon(Icons.add_box_rounded),
-                iconSize: 40,
-              )
+                onPressed: toggleTitle,
+                icon: const Icon(Icons.remove_red_eye),
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class MyLargeTitle extends StatefulWidget {
+  const MyLargeTitle({
+    super.key,
+  });
+
+  @override
+  State<MyLargeTitle> createState() => _MyLargeTitleState();
+}
+
+class _MyLargeTitleState extends State<MyLargeTitle> {
+  @override
+  void initState() {
+    super.initState();
+    print('initState');
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    print('dispose');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    print('build');
+    return Text(
+      'My Large Title',
+      style: TextStyle(
+        fontSize: 30,
+        color: Theme.of(context).textTheme.titleLarge?.color,
       ),
     );
   }
