@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toonflix/models/webtoon_detail_model.dart';
 import 'package:toonflix/models/webtoon_episode_model.dart';
 import 'package:toonflix/services/api_service.dart';
+import 'package:toonflix/widgets/episode_widget.dart';
 
 class DetailScreen extends StatefulWidget {
   final String title, thumb, id;
@@ -16,11 +18,47 @@ class DetailScreen extends StatefulWidget {
 class _DetailScreenState extends State<DetailScreen> {
   late Future<WebtoonDetailModel> webtoon;
   late Future<List<WebtoonEpisodeModel>> episodes;
+  late SharedPreferences prefs;
+
+  bool isLiked = false;
+
+  static const String likedToonsKey = 'likedToons';
+
+  Future initPrefs() async {
+    prefs = await SharedPreferences.getInstance();
+    final likedToons = prefs.getStringList(likedToonsKey);
+    if (likedToons != null) {
+      if (likedToons.contains(widget.id) == true) {
+        setState(() {
+          isLiked = true;
+        });
+      }
+    } else {
+      prefs.setStringList(likedToonsKey, []);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     webtoon = ApiService.getToonById(widget.id);
     episodes = ApiService.getLatestEpisodeById(widget.id);
+    initPrefs();
+  }
+
+  onHeartTap() async {
+    final likedToons = prefs.getStringList(likedToonsKey);
+    if (likedToons != null) {
+      if (isLiked) {
+        likedToons.remove(widget.id);
+      } else {
+        likedToons.add(widget.id);
+      }
+      await prefs.setStringList(likedToonsKey, likedToons);
+      setState(() {
+        isLiked = !isLiked;
+      });
+    }
   }
 
   @override
@@ -30,6 +68,14 @@ class _DetailScreenState extends State<DetailScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         foregroundColor: Colors.green,
+        actions: [
+          IconButton(
+            onPressed: onHeartTap,
+            icon: Icon(
+              isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+            ),
+          ),
+        ],
         elevation: 2,
         centerTitle: true,
         title: Text(
@@ -113,37 +159,7 @@ class _DetailScreenState extends State<DetailScreen> {
                     return Column(
                       children: [
                         for (var episode in snapshot.data!)
-                          Container(
-                            decoration: BoxDecoration(
-                                color: Colors.green.shade400,
-                                borderRadius: BorderRadius.circular(5)),
-                            margin: const EdgeInsets.only(bottom: 10),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 15, horizontal: 20),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      episode.title,
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ),
-                                  const Icon(
-                                    Icons.chevron_right_rounded,
-                                    color: Colors.white,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                          Episode(episode: episode, webtoonId: widget.id),
                       ],
                     );
                   }
